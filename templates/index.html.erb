@@ -1,0 +1,17 @@
+<body>
+  <ol>
+    <% bios.each do |bio| %>
+      <li>
+        <article>
+          <header>
+            <h2><%= bio.name %></h2>
+          </header>
+
+          <section>
+            <p><%= simple_format bio.body %></p>
+          </section>
+        </article>
+      </li>
+    <% end %>
+  </ol>
+</body>
