@@ -27,14 +27,6 @@ class Template
     template.result(b)
   end
 
-  def simple_format(text)
-    text.lines
-      .map(&:chomp)
-      .reject(&:empty?)
-      .map { |line| "<p>#{line.strip}</p>" }
-      .join
-  end
-
   private
 
   attr_reader :corpus_path, :template_path

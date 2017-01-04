@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "dependencies": {
     "webpack": "1.13.*",
-    "json-loader": "0.5.*"
+    "json-loader": "0.5.*",
+    "lunr": "alpha"
   }
 }

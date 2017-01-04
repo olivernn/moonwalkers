@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-var lunr = require('./lunr.js'), // TODO: should use npm for this
+var lunr = require('lunr'),
     stdin = process.stdin,
     stdout = process.stdout,
     buffer = []
@@ -20,8 +20,18 @@ stdin.on('end', function () {
     this.field('name')
     this.field('body')
 
-    this.metadataWhitelist = ['position'] // TODO: this is not well documented at the moment
+    // This is required to provide the position of terms in
+    // in the index. Currently position data is opt-in due
+    // to the increase in index size required to store all
+    // the positions. This is currently not well documented
+    // and a better interface may be required to expose this
+    // to consumers.
+    this.metadataWhitelist = ['position']
 
+    // This is the biggest change to the interface over the
+    // 0.x and 1.x branches. Documents must be added to the
+    // index within this closure. When this function completes
+    // the index is immutable, no more documents can be added.
     corpus.forEach(function (doc) {
       this.add(doc)
     }, this)

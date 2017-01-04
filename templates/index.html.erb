@@ -1,24 +1,31 @@
 <head>
+  <link href="/styles/main.css" rel="stylesheet"></link>
 </head>
 <body>
-  <form id="search-form">
-    <input type="search" placeholder="search"></input>
-    <button type="submit">Search</button>
-  </form>
-  <ol>
-    <% bios.each do |bio| %>
-      <li>
-        <article data-bio-id="<%= bio.id %>">
-          <header>
-            <h2 data-field="name"><%= bio.name %></h2>
-          </header>
+  <div class="content">
+    <form id="search-form">
+      <input type="search" placeholder="search"></input>
+      <div class="query-error"></div>
+      <div class="controls">
+        <button type="submit">Search</button>
+        <button type="reset">Reset</button>
+      </div>
+    </form>
+    <ol>
+      <% bios.each do |bio| %>
+        <li data-bio-id="<%= bio.id %>">
+          <article>
+            <header>
+              <h2 data-field="name"><%= bio.name %></h2>
+            </header>
 
-          <section data-field="body">
-            <%= simple_format bio.body %>
-          </section>
-        </article>
-      </li>
-    <% end %>
-  </ol>
+            <section data-field="body">
+              <p><%= bio.body %></p>
+            </section>
+          </article>
+        </li>
+      <% end %>
+    </ol>
+   </div>
   <script src="/build/index.js"></script>
 </body>

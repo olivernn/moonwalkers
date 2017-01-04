@@ -1,3 +1,21 @@
+/**
+ * Represents the location of a match within a
+ * larger string. Extracted from a lunr.Index~Result.
+ *
+ * @typedef {number[]} MatchLocation
+ * @property {number} 0 - Starting index of the match
+ * @property {number} 1 - Length of the match
+ */
+
+/**
+ * Highlights text within a dom element.
+ *
+ * Specifically this is designed to work with the output
+ * positions of terms returned from a lunr search.
+ *
+ * @param {HTMLElement} element - the element that contains text to highlight.
+ * @param {MatchLocation[]} matches - the list of matches to highlight.
+ */
 module.exports = function (element, matches) {
 
   var nodeFilter = {
