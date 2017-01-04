@@ -1,0 +1,31 @@
+#!/usr/bin/env node
+
+var lunr = require('./lunr.js'), // TODO: should use npm for this
+    stdin = process.stdin,
+    stdout = process.stdout,
+    buffer = []
+
+stdin.resume()
+stdin.setEncoding('utf8')
+
+stdin.on('data', function (data) {
+  buffer.push(data)
+})
+
+stdin.on('end', function () {
+  var corpus = JSON.parse(buffer.join())
+
+  var idx = lunr(function () {
+    this.ref('id')
+    this.field('name')
+    this.field('body')
+
+    this.metadataWhitelist = ['position'] // TODO: this is not well documented at the moment
+
+    corpus.forEach(function (doc) {
+      this.add(doc)
+    }, this)
+  })
+
+  stdout.write(JSON.stringify(idx))
+})

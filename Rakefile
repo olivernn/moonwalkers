@@ -1,9 +1,11 @@
 require 'rake'
 require 'json'
 require 'erb'
+require 'open3'
+require 'webrick'
 
 class Template
-  Bio = Struct.new(:name, :body)
+  Bio = Struct.new(:id, :name, :body)
 
   def self.render(corpus_path, template_path)
     new(corpus_path, template_path).render
@@ -16,7 +18,7 @@ class Template
 
   def bios
     corpus.map do |attrs|
-      Bio.new(*attrs.values_at('name', 'body'))
+      Bio.new(*attrs.values_at('id', 'name', 'body'))
     end
   end
 
@@ -52,6 +54,7 @@ file 'build/corpus.json' => ['build', *Rake::FileList['bios/*.txt']] do |t|
   corpus = t.sources.grep(/\.txt$/)
     .map do |path|
       {
+        id: path.pathmap('%n'),
         name: path.pathmap('%n').gsub('_', ' '),
         body: File.read(path),
       }
@@ -66,6 +69,20 @@ file 'build/index.html' => ['build/corpus.json', 'templates/index.html.erb'] do 
   File.open(t.name, 'w') do |f|
     f << Template.render(*t.sources)
   end
+end
+
+file 'build/index.json' => ['build/corpus.json'] do |t|
+  Open3.popen2('./build-index') do |stdin, stdout, wt|
+    IO.copy_stream(t.source, stdin)
+    stdin.close
+    IO.copy_stream(stdout, t.name)
+  end
+end
+
+task :default => ['build/index.json', 'build/index.html']
+
+task :server do
+  WEBrick::HTTPServer.new(:Port => 8000, :DocumentRoot => Dir.pwd).start
 end
 
 task :clean do

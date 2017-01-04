@@ -1,8 +1,20 @@
+<head>
+  <script src="/lunr.js"></script>
+  <script>
+    fetch('/build/index.json').then(function (response) {
+      if (response.ok) {
+        response.json().then(function (json) {
+          window.idx = lunr.Index.load(json)
+        })
+      }
+    })
+  </script>
+</head>
 <body>
   <ol>
     <% bios.each do |bio| %>
       <li>
-        <article>
+        <article data-bio-id="<%= bio.id %>">
           <header>
             <h2><%= bio.name %></h2>
           </header>
