@@ -1,29 +1,24 @@
 <head>
-  <script src="/lunr.js"></script>
-  <script>
-    fetch('/build/index.json').then(function (response) {
-      if (response.ok) {
-        response.json().then(function (json) {
-          window.idx = lunr.Index.load(json)
-        })
-      }
-    })
-  </script>
 </head>
 <body>
+  <form id="search-form">
+    <input type="search" placeholder="search"></input>
+    <button type="submit">Search</button>
+  </form>
   <ol>
     <% bios.each do |bio| %>
       <li>
         <article data-bio-id="<%= bio.id %>">
           <header>
-            <h2><%= bio.name %></h2>
+            <h2 data-field="name"><%= bio.name %></h2>
           </header>
 
-          <section>
-            <p><%= simple_format bio.body %></p>
+          <section data-field="body">
+            <%= simple_format bio.body %>
           </section>
         </article>
       </li>
     <% end %>
   </ol>
+  <script src="/build/index.js"></script>
 </body>

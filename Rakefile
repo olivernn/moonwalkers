@@ -31,7 +31,7 @@ class Template
     text.lines
       .map(&:chomp)
       .reject(&:empty?)
-      .map { |line| "<p>#{line}</p>" }
+      .map { |line| "<p>#{line.strip}</p>" }
       .join
   end
 
@@ -79,7 +79,11 @@ file 'build/index.json' => ['build/corpus.json'] do |t|
   end
 end
 
-task :default => ['build/index.json', 'build/index.html']
+file 'build/index.js' => [*Rake::FileList['src/*.js']] do |t|
+  sh "./node_modules/.bin/webpack src/main.js #{t.name}"
+end
+
+task :default => ['build/index.json', 'build/index.html', 'build/index.js']
 
 task :server do
   WEBrick::HTTPServer.new(:Port => 8000, :DocumentRoot => Dir.pwd).start
