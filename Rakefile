@@ -40,9 +40,9 @@ class Template
   end
 end
 
-directory "build"
+directory "docs"
 
-file 'build/corpus.json' => ['build', *Rake::FileList['bios/*.txt']] do |t|
+file 'docs/corpus.json' => ['docs', *Rake::FileList['bios/*.txt']] do |t|
   corpus = t.sources.grep(/\.txt$/)
     .map do |path|
       {
@@ -57,13 +57,13 @@ file 'build/corpus.json' => ['build', *Rake::FileList['bios/*.txt']] do |t|
   end
 end
 
-file 'build/index.html' => ['build/corpus.json', 'templates/index.html.erb'] do |t|
+file 'docs/index.html' => ['docs/corpus.json', 'templates/index.html.erb'] do |t|
   File.open(t.name, 'w') do |f|
     f << Template.render(*t.sources)
   end
 end
 
-file 'build/index.json' => ['build/corpus.json'] do |t|
+file 'docs/index.json' => ['docs/corpus.json'] do |t|
   Open3.popen2('./build-index') do |stdin, stdout, wt|
     IO.copy_stream(t.source, stdin)
     stdin.close
@@ -71,16 +71,20 @@ file 'build/index.json' => ['build/corpus.json'] do |t|
   end
 end
 
-file 'build/index.js' => [*Rake::FileList['src/*.js']] do |t|
+file 'docs/index.js' => [*Rake::FileList['src/*.js']] do |t|
   sh "./node_modules/.bin/webpack src/main.js #{t.name}"
 end
 
-task :default => ['build/index.json', 'build/index.html', 'build/index.js']
+file 'docs/main.css' => ['docs', 'styles/main.css'] do |t|
+  cp 'styles/main.css', 'docs/main.css'
+end
+
+task :default => ['docs/index.json', 'docs/index.html', 'docs/index.js', 'docs/main.css']
 
 task :server do
   WEBrick::HTTPServer.new(:Port => 8000, :DocumentRoot => Dir.pwd).start
 end
 
 task :clean do
-  rm_rf 'build'
+  rm_rf 'docs'
 end

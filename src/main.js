@@ -1,5 +1,5 @@
-var json = require('json!./../build/index.json'),
-    corpus = require('json!./../build/corpus.json'),
+var json = require('json!./../docs/index.json'),
+    corpus = require('json!./../docs/corpus.json'),
     lunr = require('lunr'),
     wrapper = require('./wrapper.js')
 
