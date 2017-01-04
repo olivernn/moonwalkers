@@ -32537,13 +32537,12 @@
 
 	    if (match[0] < nodeEndIndex) {
 	      var range = document.createRange(),
-	          tag = document.createElement('strong'),
+	          tag = document.createElement('mark'),
 	          rangeStart = match[0] - index,
 	          rangeEnd = rangeStart + match[1];
 
 	      tag.dataset.rangeStart = rangeStart
 	      tag.dataset.rangeEnd = rangeEnd
-	      tag.classList.add('highlight')
 
 	      range.setStart(node, rangeStart)
 	      range.setEnd(node, rangeEnd)
