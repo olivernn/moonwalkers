@@ -10,7 +10,8 @@ module.exports = function (element, matches) {
   }
 
   var index = 0,
-      match = matches.shift()
+      matches = matches.slice(),
+      match = matches.shift(),
       walker = document.createTreeWalker(
         element,
         NodeFilter.SHOW_TEXT,
@@ -21,18 +22,18 @@ module.exports = function (element, matches) {
   while (node = walker.nextNode()) {
     if (match == undefined) break
 
-    var text = node.textContent
-        nodeEndIndex = index + node.length
-
-    debugger
+    var text = node.textContent,
+        nodeEndIndex = index + node.length;
 
     if (match[0] < nodeEndIndex) {
       var range = document.createRange(),
-          tag = document.createElement('i'),
+          tag = document.createElement('strong'),
           rangeStart = match[0] - index,
-          rangeEnd = rangeStart + match[1]
+          rangeEnd = rangeStart + match[1];
 
-      console.log(text.slice(rangeStart, rangeEnd))
+      tag.dataset.rangeStart = rangeStart
+      tag.dataset.rangeEnd = rangeEnd
+      tag.classList.add('highlight')
 
       range.setStart(node, rangeStart)
       range.setEnd(node, rangeEnd)
@@ -42,7 +43,7 @@ module.exports = function (element, matches) {
 
       // the next node will now actually be the text we just wrapped, so
       // we need to skip it
-      console.log(walker.nextNode())
+      walker.nextNode()
       match = matches.shift()
     } else {
       index = nodeEndIndex
