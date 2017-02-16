@@ -58,6 +58,14 @@
 
 	window.corpus = corpus
 	window.idx = idx
+	window.lunr = lunr
+
+	window.search = function (q) {
+	  console.time('search: ' + q)
+	  var results = idx.search(q)
+	  console.timeEnd('search: ' + q)
+	  return results
+	}
 
 	var buildSearchResult = function (doc) {
 	  var li = document.createElement('li'),
@@ -166,6 +174,7 @@
 /***/ function(module, exports) {
 
 	module.exports = {
+		"version": "2.0.0-alpha.5",
 		"averageDocumentLength": 235.16666666666666,
 		"b": 0.75,
 		"k1": 1.2,
@@ -29796,7 +29805,7 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/**
-	 * lunr - http://lunrjs.com - A bit like Solr, but much smaller and not as bright - 2.0.0-alpha.1
+	 * lunr - http://lunrjs.com - A bit like Solr, but much smaller and not as bright - 2.0.0-alpha.5
 	 * Copyright (C) 2017 Oliver Nightingale
 	 * MIT Licensed
 	 * @license
@@ -29848,9 +29857,11 @@
 	    lunr.stemmer
 	  )
 
-	  config.call(builder)
+	  config.call(builder, builder)
 	  return builder.build()
 	}
+
+	lunr.version = "2.0.0-alpha.5"
 	/*!
 	 * lunr.utils
 	 * Copyright (C) 2017 Oliver Nightingale
@@ -30889,7 +30900,19 @@
 	lunr.TokenSet = function () {
 	  this.final = false
 	  this.edges = {}
+	  this.id = lunr.TokenSet._nextId
+	  lunr.TokenSet._nextId += 1
 	}
+
+	/**
+	 * Keeps track of the next, auto increment, identifier to assign
+	 * to a new tokenSet.
+	 *
+	 * TokenSets require a unique identifier to be correctly minimised.
+	 *
+	 * @private
+	 */
+	lunr.TokenSet._nextId = 1
 
 	/**
 	 * Creates a TokenSet instance from the given sorted array of words.
@@ -31189,14 +31212,14 @@
 	  }
 
 	  var str = this.final ? '1' : '0',
-	      labels = Object.keys(this.edges),
+	      labels = Object.keys(this.edges).sort(),
 	      len = labels.length
 
 	  for (var i = 0; i < len; i++) {
 	    var label = labels[i],
 	        node = this.edges[label]
 
-	    str = str + label + node.toString()
+	    str = str + label + node.id
 	  }
 
 	  return str
@@ -31968,6 +31991,26 @@
 	    k1: this._k1
 	  })
 	}
+
+	/**
+	 * Applies a plugin to the index builder.
+	 *
+	 * A plugin is a function that is called with the index builder as its context.
+	 * Plugins can be used to customise or extend the behaviour of the index
+	 * in some way. A plugin is just a function, that encapsulated the custom
+	 * behaviour that should be applied when building the index.
+	 *
+	 * The plugin function will be called with the index builder as its argument, additional
+	 * arguments can also be passed when calling use. The function will be called
+	 * with the index builder as its context.
+	 *
+	 * @param {Function} plugin The plugin to apply.
+	 */
+	lunr.Builder.prototype.use = function (fn) {
+	  var args = Array.prototype.slice.call(arguments, 1)
+	  args.unshift(this)
+	  fn.apply(this, args)
+	}
 	/**
 	 * Contains and collects metadata about a matching document.
 	 * A single instance of lunr.MatchData is returned as part of every
@@ -32346,7 +32389,7 @@
 	    return
 	  }
 
-	  parser.currentClause.term = lexeme.str
+	  parser.currentClause.term = lexeme.str.toLowerCase()
 
 	  if (lexeme.str.indexOf("*") != -1) {
 	    parser.currentClause.usePipeline = false

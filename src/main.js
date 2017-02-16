@@ -12,6 +12,14 @@ var documents = corpus.reduce(function (memo, doc) {
 
 window.corpus = corpus
 window.idx = idx
+window.lunr = lunr
+
+window.search = function (q) {
+  console.time('search: ' + q)
+  var results = idx.search(q)
+  console.timeEnd('search: ' + q)
+  return results
+}
 
 var buildSearchResult = function (doc) {
   var li = document.createElement('li'),
