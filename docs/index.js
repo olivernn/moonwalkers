@@ -29805,7 +29805,7 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/**
-	 * lunr - http://lunrjs.com - A bit like Solr, but much smaller and not as bright - 2.0.2
+	 * lunr - http://lunrjs.com - A bit like Solr, but much smaller and not as bright - 2.0.3
 	 * Copyright (C) 2017 Oliver Nightingale
 	 * @license MIT
 	 */
@@ -29860,7 +29860,7 @@
 	  return builder.build()
 	}
 
-	lunr.version = "2.0.2"
+	lunr.version = "2.0.3"
 	/*!
 	 * lunr.utils
 	 * Copyright (C) 2017 Oliver Nightingale
@@ -30328,50 +30328,91 @@
 	  this.elements = elements || []
 	}
 
+
+	/**
+	 * Calculates the position within the vector to insert a given index.
+	 *
+	 * This is used internally by insert and upsert. If there are duplicate indexes then
+	 * the position is returned as if the value for that index were to be updated, but it
+	 * is the callers responsibility to check whether there is a duplicate at that index
+	 *
+	 * @param {Number} insertIdx - The index at which the element should be inserted.
+	 * @returns {Number}
+	 */
+	lunr.Vector.prototype.positionForIndex = function (index) {
+	  // For an empty vector the tuple can be inserted at the beginning
+	  if (this.elements.length == 0) {
+	    return 0
+	  }
+
+	  var start = 0,
+	      end = this.elements.length / 2,
+	      sliceLength = end - start,
+	      pivotPoint = Math.floor(sliceLength / 2),
+	      pivotIndex = this.elements[pivotPoint * 2]
+
+	  while (sliceLength > 1) {
+	    if (pivotIndex < index) {
+	      start = pivotPoint
+	    }
+
+	    if (pivotIndex > index) {
+	      end = pivotPoint
+	    }
+
+	    if (pivotIndex == index) {
+	      break
+	    }
+
+	    sliceLength = end - start
+	    pivotPoint = start + Math.floor(sliceLength / 2)
+	    pivotIndex = this.elements[pivotPoint * 2]
+	  }
+
+	  if (pivotIndex == index) {
+	    return pivotPoint * 2
+	  }
+
+	  if (pivotIndex > index) {
+	    return pivotPoint * 2
+	  }
+
+	  if (pivotIndex < index) {
+	    return (pivotPoint + 1) * 2
+	  }
+	}
+
 	/**
 	 * Inserts an element at an index within the vector.
+	 *
+	 * Does not allow duplicates, will throw an error if there is already an entry
+	 * for this index.
 	 *
 	 * @param {Number} insertIdx - The index at which the element should be inserted.
 	 * @param {Number} val - The value to be inserted into the vector.
 	 */
 	lunr.Vector.prototype.insert = function (insertIdx, val) {
+	  this.upsert(insertIdx, val, function () {
+	    throw "duplicate index"
+	  })
+	}
+
+	/**
+	 * Inserts or updates an existing index within the vector.
+	 *
+	 * @param {Number} insertIdx - The index at which the element should be inserted.
+	 * @param {Number} val - The value to be inserted into the vector.
+	 * @param {function} fn - A function that is called for updates, the existing value and the
+	 * requested value are passed as arguments
+	 */
+	lunr.Vector.prototype.upsert = function (insertIdx, val, fn) {
 	  this._magnitude = 0
+	  var position = this.positionForIndex(insertIdx)
 
-	  if (this.elements.length == 0) {
-	    this.elements.push(insertIdx, val)
-	    return
-	  }
-
-	  var start = 0,
-	      end = this.elements.length,
-	      sliceLength = end - start,
-	      pivot = Math.floor((sliceLength / 2) / 2) * 2,
-	      pivotIdx = this.elements[pivot]
-
-	  while (sliceLength > 2) {
-	    if (pivotIdx == insertIdx) {
-	      throw "duplicate index"
-	    }
-
-	    if (insertIdx > pivotIdx) {
-	      start = pivot
-	    }
-
-	    if (insertIdx < pivotIdx) {
-	      end = pivot
-	    }
-
-	    sliceLength = end - start
-	    pivot = start + Math.floor((sliceLength / 2) / 2) * 2
-	    pivotIdx = this.elements[pivot]
-	  }
-
-	  if (pivotIdx > insertIdx) {
-	    this.elements.splice(pivot, 0, insertIdx, val)
-	  }
-
-	  if (pivotIdx < insertIdx) {
-	    this.elements.splice(pivot + 2, 0, insertIdx, val)
+	  if (this.elements[position] == insertIdx) {
+	    this.elements[position + 1] = fn(this.elements[position + 1], val)
+	  } else {
+	    this.elements.splice(position, 0, insertIdx, val)
 	  }
 	}
 
@@ -31561,13 +31602,17 @@
 	            score = idf * ((this.k1 + 1) * tf) / (this.k1 * (1 - this.b + this.b * (query.clauses.length / this.averageDocumentLength)) + tf)
 
 	        /*
-	         * Inserting the found query term, along with its term index
+	         * Upserting the found query term, along with its term index
 	         * into the vector representing the query. It is here that
 	         * any boosts are applied to the score. They could have been
 	         * applied when calculating the score above, but that expression
 	         * is already quite busy.
+	         *
+	         * Using upsert because there could already be an entry in the vector
+	         * for the term we are working with. In that case we just add the scores
+	         * together.
 	         */
-	        queryVector.insert(termIndex, score * clause.boost)
+	        queryVector.upsert(termIndex, score * clause.boost, function (a, b) { return a + b })
 
 	        for (var k = 0; k < clause.fields.length; k++) {
 	          /*
@@ -32582,7 +32627,8 @@
 	  }
 
 	  var index = 0,
-	      matches = matches.slice(),
+	      matches = matches.sort(function (a, b) { return a[0] - b[0] }).slice(),
+	      previousMatch = [-1, -1]
 	      match = matches.shift(),
 	      walker = document.createTreeWalker(
 	        element,
@@ -32593,6 +32639,7 @@
 
 	  while (node = walker.nextNode()) {
 	    if (match == undefined) break
+	    if (match[0] == previousMatch[0]) continue
 
 	    var text = node.textContent,
 	        nodeEndIndex = index + node.length;
@@ -32615,6 +32662,7 @@
 	      // the next node will now actually be the text we just wrapped, so
 	      // we need to skip it
 	      walker.nextNode()
+	      previousMatch = match
 	      match = matches.shift()
 	    } else {
 	      index = nodeEndIndex
