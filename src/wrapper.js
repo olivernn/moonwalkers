@@ -28,7 +28,8 @@ module.exports = function (element, matches) {
   }
 
   var index = 0,
-      matches = matches.slice(),
+      matches = matches.sort(function (a, b) { return a[0] - b[0] }).slice(),
+      previousMatch = [-1, -1]
       match = matches.shift(),
       walker = document.createTreeWalker(
         element,
@@ -39,6 +40,7 @@ module.exports = function (element, matches) {
 
   while (node = walker.nextNode()) {
     if (match == undefined) break
+    if (match[0] == previousMatch[0]) continue
 
     var text = node.textContent,
         nodeEndIndex = index + node.length;
@@ -61,6 +63,7 @@ module.exports = function (element, matches) {
       // the next node will now actually be the text we just wrapped, so
       // we need to skip it
       walker.nextNode()
+      previousMatch = match
       match = matches.shift()
     } else {
       index = nodeEndIndex
