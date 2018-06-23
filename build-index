@@ -13,7 +13,7 @@ stdin.on('data', function (data) {
 })
 
 stdin.on('end', function () {
-  var corpus = JSON.parse(buffer.join())
+  var corpus = JSON.parse(buffer.join(''))
 
   var idx = lunr(function () {
     this.ref('id')
