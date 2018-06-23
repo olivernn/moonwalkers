@@ -82,7 +82,7 @@ end
 task :default => ['docs/index.json', 'docs/index.html', 'docs/index.js', 'docs/main.css']
 
 task :server do
-  WEBrick::HTTPServer.new(:Port => 8000, :DocumentRoot => Dir.pwd + "/docs").start
+  WEBrick::HTTPServer.new(:Host => '0.0.0.0', :Port => 8000, :DocumentRoot => Dir.pwd + "/docs").start
 end
 
 task :clean do
