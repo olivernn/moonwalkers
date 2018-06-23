@@ -4,6 +4,6 @@
   "dependencies": {
     "webpack": "1.13.*",
     "json-loader": "0.5.*",
-    "lunr": "2.2.0"
+    "lunr": "2.3.0"
   }
 }
